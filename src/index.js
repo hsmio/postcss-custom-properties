@@ -1,3 +1,4 @@
+import path from 'path';
 import postcss from 'postcss';
 import getCustomPropertiesFromRoot from './lib/get-custom-properties-from-root';
 import getCustomPropertiesFromImports from './lib/get-custom-properties-from-imports';
@@ -22,7 +23,20 @@ export default postcss.plugin('postcss-custom-properties', opts => {
 	};
 
 	// asynchronous transform
-	const asyncTransform = async root => {
+	const asyncTransform = async (root, result) => {
+
+		// adds dependency message for css-loader to notify webpack about imports
+		// @see https://webpack.js.org/loaders/postcss-loader/#add-dependencies
+		importFrom.forEach((source) => {
+			if (!(typeof source === 'string' || source instanceof String)) return;
+
+			result.messages.push({
+				plugin: 'postcss-custom-properties',
+				type: 'dependency',
+				file: path.resolve(source),
+			});
+		});
+
 		const customProperties = Object.assign(
 			{},
 			getCustomPropertiesFromRoot(root, { preserve }),
